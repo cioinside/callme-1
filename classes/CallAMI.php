@@ -112,6 +112,29 @@ class CallAMI {
 		} else $this->conf = false;
     }
 
+    /**
+     * Ping AMI
+     *
+     * @param CallAMI::NewPAMIClient $pamiClient
+     * @param integer $pingCount
+     * @param integer $pingLimit - set limit for close connection
+     *
+     * @return mixed
+     */
+    public function ping(&$pamiClient, &$pingCount, $pingLimit){
+        $ping = $pamiClient->send(new PingAction());
+        $pingResponse = $ping->getKey("response");
+        if ($pingResponse != "Success"):
+            if ($pingCount < $pingLimit):
+                $pingCount++;
+            else:
+                $pamiClient->ClosePAMIClient($pamiClient);
+            endif;
+        else:
+            if ($pingCount > 0) $pingCount = 0;
+        endif;
+    }
+
 	/**
 	 * Originate call
 	 *

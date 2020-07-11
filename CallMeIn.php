@@ -14,15 +14,12 @@ require __DIR__ . '/vendor/autoload.php';
 /*
 * start: for events listener
 */
-use PAMI\Listener\IEventListener;
 use PAMI\Message\Event\EventMessage;
-use PAMI\Message\Event;
 use PAMI\Message\Event\DialBeginEvent;
 use PAMI\Message\Event\DialEndEvent;
 use PAMI\Message\Event\NewchannelEvent;
 use PAMI\Message\Event\VarSetEvent;
 use PAMI\Message\Event\HangupEvent;
-use PAMI\Message\Action\ActionMessage;
 use PAMI\Message\Action\SetVarAction;
 /*
 * end: for events listener
@@ -37,9 +34,14 @@ $globalsObj = Globals::getInstance();
 //массив внешних номеров
 $globalsObj->extentions = $helper->getConfig('extentions');
 
+//устаналиваем значение таймаута в переменную чтобы не обращаться каждый раз к файлу config.php
+$listener_timeout = $helper->getConfig('listener_timeout');
+
 //создаем экземпляр класса PAMI
 $pamiClient = $callami->NewPAMIClient();
 $pamiClient->open();
+
+$pingCount = 0;
 
 //обрабатываем NewchannelEvent события
 $pamiClient->registerEventListener(
@@ -235,6 +237,7 @@ $pamiClient->registerEventListener(
 
 while(true) {
     $pamiClient->process();
-    usleep($helper->getConfig('listener_timeout'));
+    $callami->ping($pamiClient,  $pingCount, 10);
+    usleep($listener_timeout);
 }
 $pamiClient->ClosePAMIClient($pamiClient);
